@@ -222,6 +222,10 @@ All long form (--) flags can be toggled with the dig-standard +[no]flag notation
 		os.Exit(1)
 	}
 	cli.ParsePlusFlags(&opts, args)
+	// If --nord was used, set RecursionDesired to false
+	if opts.RecursionUndesired {
+		opts.RecursionDesired = false
+	}
 	util.UseColor = opts.Color
 
 	log.SetReportTimestamp(false)

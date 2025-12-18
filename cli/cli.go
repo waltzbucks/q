@@ -61,6 +61,7 @@ type Flags struct {
 	AuthenticData       bool `long:"ad" description:"Set AD (Authentic Data) flag in query"`
 	CheckingDisabled    bool `long:"cd" description:"Set CD (Checking Disabled) flag in query"`
 	RecursionDesired    bool `long:"rd" description:"Set RD (Recursion Desired) flag in query (default: true)"`
+	RecursionUndesired  bool `long:"nord" description:"Unset RD (Recursion Desired) flag in query (default: false)"`
 	RecursionAvailable  bool `long:"ra" description:"Set RA (Recursion Available) flag in query"`
 	Zero                bool `long:"z" description:"Set Z (Zero) flag in query"`
 	Truncated           bool `long:"t" description:"Set TC (Truncated) flag in query"`
@@ -109,13 +110,23 @@ type Flags struct {
 // ParsePlusFlags parses a list of flags notated by +[no]flag and sets the corresponding opts fields
 func ParsePlusFlags(opts *Flags, args []string) {
 	for _, arg := range args {
-		if len(arg) > 3 && arg[0] == '+' {
+		if len(arg) > 1 && arg[0] == '+' {
 			argFound := false
+			flagpart := strings.ToLower(arg[1:])
 
-			flag := strings.ToLower(arg[3:])
-			state := arg[1:3] != "no"
-			if state {
-				flag = strings.ToLower(arg[1:])
+			if flagpart == "norecurse" {
+				opts.RecursionDesired = false
+				continue
+			}
+
+			var flag string
+			var state bool
+			if len(flagpart) > 2 && flagpart[:2] == "no" {
+				flag = flagpart[2:]
+				state = false
+			} else {
+				flag = flagpart
+				state = true
 			}
 
 			v := reflect.Indirect(reflect.ValueOf(opts))
@@ -257,7 +268,7 @@ func AddEqualSigns(args []string) []string {
 						newArgs = append(newArgs, arg)
 						continue
 					}
-					
+
 					// If the next argument is a value (not a flag), combine them
 					if len(nextArg) == 0 || nextArg[0] != '-' {
 						newArgs = append(newArgs, arg+"="+nextArg)
